@@ -172,7 +172,7 @@ local ThemeManager = loadstring(themeSrc)()
 local SaveManager  = loadstring(saveSrc)()
 
 local Window = Library:CreateWindow({
-    Title            = "A Universal Time",
+    Title            = "Zero Hub",
     Footer           = "A Universal Time  |  V.0.0.1",
     Icon             = 83109184888967,
     Font             = Enum.Font.Code,
@@ -197,17 +197,17 @@ end)()
 
 if not _hasSeenLoading then
     local _Loading = Library:CreateLoading({
-        Title       = "A Universal Time",
+        Title       = "Zero Hub",
         Icon        = 86441407905385,
         TotalSteps  = 6,
         ShowSidebar = true,
         WindowWidth = 640,
     })
-    _Loading:SetMessage("Initializing A Universal Time")
+    _Loading:SetMessage("Initializing Zero Hub")
     _Loading:SetDescription("Please wait...")
     _Loading:ShowSidebarPage(true)
 
-    _Loading.Sidebar:AddLabel('<font color="rgb(200,130,240)"><b>A Universal Time</b></font>  V.0.0.1')
+    _Loading.Sidebar:AddLabel('<font color="rgb(200,130,240)"><b>Zero Hub</b></font>  V.0.0.1')
     _Loading.Sidebar:AddLabel("Game  Universal")
     _Loading.Sidebar:AddDivider()
     _Loading.Sidebar:AddLabel("Player  <b>" .. LP.Name .. "</b>")
@@ -243,7 +243,7 @@ if not _hasSeenLoading then
     task.wait(0.7)
 
     _Loading:SetCurrentStep(5)
-    _Loading:SetDescription("Applying A Universal Time theme...")
+    _Loading:SetDescription("Applying Zero Hub theme...")
     task.wait(0.6)
 
     _Loading:SetCurrentStep(6)
@@ -255,11 +255,11 @@ if not _hasSeenLoading then
     _Loading:Continue()
 else
     local _Loading = Library:CreateLoading({
-        Title      = "A Universal Time",
+        Title      = "Zero Hub",
         Icon       = 86441407905385,
         TotalSteps = 1,
     })
-    _Loading:SetMessage("A Universal Time")
+    _Loading:SetMessage("Zero Hub")
     _Loading:SetDescription("Loading...")
     _Loading:SetCurrentStep(1)
     task.wait(0.1)
@@ -275,7 +275,7 @@ local chatGui      = nil
 local _cursorConn  = nil
 local _cursorDot   = nil
 
-local _watermark = Library:AddDraggableLabel("⊙ A Universal Time")
+local _watermark = Library:AddDraggableLabel("⊙ Zero Hub")
 local _wFrameTimer = tick(); local _wFrames = 0; local _wFPS = 60
 RS.RenderStepped:Connect(function()
     _wFrames = _wFrames + 1
@@ -286,7 +286,7 @@ RS.RenderStepped:Connect(function()
     pcall(function()
         ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
     end)
-    _watermark:SetText(string.format("⊙ A Universal Time  |  %d fps  |  %d ms", _wFPS, ping))
+    _watermark:SetText(string.format("⊙ Zero Hub  |  %d fps  |  %d ms", _wFPS, ping))
 end)
 Library.ShowToggleFrameInKeybinds = true
 local Tabs = {
@@ -1344,20 +1344,22 @@ local _questFarmingMobDropdown
 
 local _QuestList = Tabs.Quests:AddLeftGroupbox("Quests List", "scroll-text")
 
-local _questStatusLabel = _QuestList:AddLabel("No active quests.")
+local _questLabels = {}
+for i = 1, 5 do
+    _questLabels[i] = _QuestList:AddLabel(" ")
+end
+
 task.spawn(function()
     while true do
         task.wait(0.75)
         pcall(function()
             local lines = LP:WaitForChild("QuestLines"):GetChildren()
-            if #lines == 0 then
-                _questStatusLabel:SetText("No active quests.")
-            else
-                local names = {}
-                for _, q in ipairs(lines) do
-                    table.insert(names, q.Name)
+            for i = 1, 5 do
+                if lines[i] then
+                    _questLabels[i]:SetText(lines[i].Name)
+                else
+                    _questLabels[i]:SetText(" ")
                 end
-                _questStatusLabel:SetText(table.concat(names, "\n"))
             end
         end)
     end
@@ -1371,21 +1373,6 @@ _QuestList:AddButton({Text="Open Quest Menu", Func=function()
 end})
 
 local _QuestSettings = Tabs.Quests:AddRightGroupbox("Quest Settings", "settings-2")
-
-_QuestSettings:AddLabel("1. Only one quest at a time.")
-_QuestSettings:AddDivider()
-_QuestSettings:AddLabel("2. Enable Auto Stats or Auto Collect Rewards.")
-_QuestSettings:AddDivider()
-_QuestSettings:AddLabel("3. Don't use Farming tab during a quest.")
-_QuestSettings:AddDivider()
-_QuestSettings:AddLabel("4. Item farm auto-enables during quests.")
-_QuestSettings:AddDivider()
-_QuestSettings:AddLabel("5. Press Start Auto Quest to begin.")
-_QuestSettings:AddDivider()
-_QuestSettings:AddLabel("6. To stop: disable quest + Clear Config.")
-_QuestSettings:AddDivider()
-_QuestSettings:AddLabel("7. Auto Quest stopping = doing non-mob tasks.")
-_QuestSettings:AddDivider()
 
 local _startQuestToggle
 _startQuestToggle = _QuestSettings:AddToggle("StartAutoQuest", {Text="Start Auto Quest", Default=false,
@@ -1431,8 +1418,8 @@ _QuestBosses:AddToggle("AutofarmDragonKnight", {Text="Autofarm Dragon Knight", D
         _qBossLoop("AutofarmDragonKnight",
             {"Slayer_Quest","Dragon Knight"},
             function()
-                if Opt.FarmingBossesSelect then pcall(function() Opt.FarmingBossesSelect:SetValue({["The Knight"]=true}) end) end
-                if Opt.FarmingMobSelect    then pcall(function() Opt.FarmingMobSelect:SetValue("Guardians") end) end
+                pcall(function() Opt.MobSelect:SetValue({"Any (Closest)"}) end)
+                pcall(function() Opt.MobSelect:SetValue("Guardians") end)
             end)
     end})
 
@@ -1442,8 +1429,8 @@ _QuestBosses:AddToggle("AutofarmTheBearer", {Text="Autofarm The Bearer", Default
         _qBossLoop("AutofarmTheBearer",
             {"Slayer_Quest","Finger Bearer"},
             function()
-                if Opt.FarmingBossesSelect then pcall(function() Opt.FarmingBossesSelect:SetValue({["The Bearer"]=true}) end) end
-                if Opt.FarmingMobSelect    then pcall(function() Opt.FarmingMobSelect:SetValue("Curses") end) end
+                pcall(function() Opt.MobSelect:SetValue({"Any (Closest)"}) end)
+                pcall(function() Opt.MobSelect:SetValue("Curses") end)
                 if Opt.StoreItemsSelect    then pcall(function() Opt.StoreItemsSelect:SetValue({["Sukuna's Finger"]=true}) end) end
                 if Opt.ExcludeItemsSelect  then pcall(function() Opt.ExcludeItemsSelect:SetValue({["Sukuna's Finger"]=true}) end) end
             end)
@@ -1462,8 +1449,8 @@ _QuestBosses:AddToggle("AutofarmKuroKuro", {Text="Autofarm Kuro Kuro", Default=f
             end
         end)
         task.spawn(function()
-            if Opt.FarmingBossesSelect then pcall(function() Opt.FarmingBossesSelect:SetValue({["Kuro"]=true}) end) end
-            if Opt.FarmingMobSelect    then pcall(function() Opt.FarmingMobSelect:SetValue("Curses") end) end
+            pcall(function() Opt.MobSelect:SetValue({"Any (Closest)"}) end)
+            pcall(function() Opt.MobSelect:SetValue("Curses") end)
         end)
     end})
 
@@ -1473,8 +1460,8 @@ _QuestBosses:AddToggle("AutofarmGojoHalf", {Text="Autofarm Gojo Half", Default=f
         _qBossLoop("AutofarmGojoHalf",
             {"Slayer_Quest","Gojo"},
             function()
-                if Opt.FarmingBossesSelect then pcall(function() Opt.FarmingBossesSelect:SetValue({["Gojo"]=true}) end) end
-                if Opt.FarmingMobSelect    then pcall(function() Opt.FarmingMobSelect:SetValue("Curses") end) end
+                pcall(function() Opt.MobSelect:SetValue({"Any (Closest)"}) end)
+                pcall(function() Opt.MobSelect:SetValue("Curses") end)
             end)
     end})
 
@@ -1500,12 +1487,12 @@ _QuestHakis:AddToggle("AutofarmBusoHaki", {Text="Autofarm Busoshoku Haki", Defau
             while Tog.AutofarmBusoHaki and Tog.AutofarmBusoHaki.Value do
                 pcall(function()
                     if LP.QuestLines["Agent's Secret"]["Agent's Secret"]["Defeat [Kuro]"].Value ~= 1 then
-                        if Opt.FarmingBossesSelect then Opt.FarmingBossesSelect:SetValue({["Kuro"]=true}) end
+                        Opt.MobSelect:SetValue("Any (Closest)")
                         _dialogueRF("Save_The_Village_Adventure")
                     elseif LP.QuestLines["Agent's Secret"]["Agent's Secret"]["Defeat [Pirate]"].Value ~= 100 then
-                        if Opt.FarmingMobSelect then Opt.FarmingMobSelect:SetValue("Pirates") end
+                        Opt.MobSelect:SetValue("Pirates")
                     else
-                        if Opt.FarmingMobSelect then Opt.FarmingMobSelect:SetValue("Curses") end
+                        Opt.MobSelect:SetValue("Curses")
                     end
                 end)
                 task.wait(1)
@@ -1525,12 +1512,12 @@ _QuestHakis:AddToggle("AutofarmKenHaki", {Text="Autofarm Kenbunshoku Haki", Defa
             while Tog.AutofarmKenHaki and Tog.AutofarmKenHaki.Value do
                 pcall(function()
                     if LP.QuestLines["Muri's Venture"]["Muri's Venture"]["Defeat [Crocodile]"].Value ~= 1 then
-                        if Opt.FarmingBossesSelect then Opt.FarmingBossesSelect:SetValue({["Surgeon of Death"]=true,["Tower"]=true,["Crocodile"]=true}) end
-                        if Opt.FarmingMobSelect    then Opt.FarmingMobSelect:SetValue("Pirates") end
+                        Opt.MobSelect:SetValue("Any (Closest)")
+                        Opt.MobSelect:SetValue("Pirates")
                     elseif LP.QuestLines["Muri's Venture"]["Muri's Venture"]["Defeat [Pirate]"].Value ~= 250 then
-                        if Opt.FarmingMobSelect then Opt.FarmingMobSelect:SetValue("Pirates") end
+                        Opt.MobSelect:SetValue("Pirates")
                     else
-                        if Opt.FarmingMobSelect then Opt.FarmingMobSelect:SetValue("Curses") end
+                        Opt.MobSelect:SetValue("Curses")
                     end
                 end)
                 task.wait(1)
@@ -1550,10 +1537,10 @@ _QuestHakis:AddToggle("AutofarmHaoHaki", {Text="Autofarm Haoshoku Haki", Default
             while Tog.AutofarmHaoHaki and Tog.AutofarmHaoHaki.Value do
                 pcall(function()
                     if LP.QuestLines["Bob's Sacred Path"]["Bob's Sacred Path"]["Defeat [Pirate]"].Value ~= 500 then
-                        if Opt.FarmingBossesSelect then Opt.FarmingBossesSelect:SetValue({["Surgeon of Death"]=true,["Shanks"]=true,["Luffy"]=true,["Whitebeard"]=true}) end
-                        if Opt.FarmingMobSelect    then Opt.FarmingMobSelect:SetValue("Pirates") end
+                        Opt.MobSelect:SetValue("Any (Closest)")
+                        Opt.MobSelect:SetValue("Pirates")
                     else
-                        if Opt.FarmingMobSelect then Opt.FarmingMobSelect:SetValue("Curses") end
+                        Opt.MobSelect:SetValue("Curses")
                     end
                 end)
                 task.wait(1)
@@ -1869,59 +1856,189 @@ _FarmTraits:AddToggle("AutoPickTraitsV1", {Text="Auto Pick Traits (V1)", Default
 
 local _FarmFeatures = Tabs.Farming:AddRightGroupbox("Farming Features", "sword")
 
-local _mobList = {
-    Thugs     = {"Thug"},
-    Prisoners = {"Fleeing"},
-    Hooligans = {"Hooligan"},
-    Pirates   = {"Pirat"},
-    Guardians = {"Guard"},
-    Curses    = {"Juju","Flyhead","Ropp","Mantis"},
-}
-local _selectedBosses = {}
-local _selectedMob    = "Curses"
-local _currentList    = _mobList.Curses
-local _selectedOffsetY = 5
+local farmState = { mobs = false, mobTarget = "" }
+local _farmMode = "Behind"
+local _farmOffX = 0
+local _farmOffY = 0
+local _farmOffZ = 6.5
+local farmConns = {}
+local _mobLabelMap = {}
 
-local _bossList = {
-    "Whitebeard","Surgeon of Death","Shanks","Mahoraga","The Strongest Of Today",
-    "The Sorcerer killer","The Strongest In History","The Vessel","The Bearer","The Knight",
-    "The Honored One","The Clown","Diavolo, The Boss","Kars","Luffy","Kuro","Dio","Tower","Crocodile"
-}
+getgenv()._AUT_autoM1    = false
+getgenv()._AUT_autoEquip = false
 
-_FarmFeatures:AddDropdown("FarmingBossesSelect", {
-    Text="Select Bosses", Values=_bossList, Default={}, Multi=true,
+if not getgenv()._AUT_combatLoopsStarted then
+    getgenv()._AUT_combatLoopsStarted = true
+    task.spawn(function()
+        local inputRF = game:GetService("ReplicatedStorage"):WaitForChild("ReplicatedModules")
+            :WaitForChild("KnitPackage"):WaitForChild("Knit"):WaitForChild("Services")
+            :WaitForChild("MoveInputService"):WaitForChild("RF"):WaitForChild("FireInput")
+        while true do
+            task.wait(0.15)
+            if getgenv()._AUT_autoM1 then
+                pcall(function() inputRF:InvokeServer("MouseButton1") end)
+            end
+        end
+    end)
+    task.spawn(function()
+        local inputRF = game:GetService("ReplicatedStorage"):WaitForChild("ReplicatedModules")
+            :WaitForChild("KnitPackage"):WaitForChild("Knit"):WaitForChild("Services")
+            :WaitForChild("MoveInputService"):WaitForChild("RF"):WaitForChild("FireInput")
+        while true do
+            task.wait(0.5)
+            if getgenv()._AUT_autoEquip then
+                pcall(function()
+                    local living = workspace:FindFirstChild("Living")
+                    local myModel = living and living:FindFirstChild(LP.Name)
+                    local states = myModel and myModel:FindFirstChild("StatesFolder")
+                    local standOn = states and states:FindFirstChild("StandOn")
+                    if not (standOn and standOn.Value) then
+                        inputRF:InvokeServer("Q")
+                    end
+                end)
+            end
+        end
+    end)
+end
+
+local function _calcFarmPos(rp)
+    local mp = rp.Position
+    local base
+    if     _farmMode == "Above"    then base = Vector3.new(mp.X, mp.Y + _farmOffZ, mp.Z)
+    elseif _farmMode == "Below"    then base = Vector3.new(mp.X, mp.Y - _farmOffZ, mp.Z)
+    elseif _farmMode == "In Front" then base = mp + rp.CFrame.LookVector * _farmOffZ
+    elseif _farmMode == "Behind"   then base = mp - rp.CFrame.LookVector * _farmOffZ
+    else                                base = Vector3.new(mp.X, mp.Y - _farmOffZ, mp.Z) end
+    return Vector3.new(base.X + _farmOffX, base.Y + _farmOffY, base.Z)
+end
+
+local function nearestMob()
+    local hrp = getHRP(); if not hrp then return end
+    local best, bestD = nil, math.huge
+    local living = workspace:FindFirstChild("Living"); if not living then return end
+    local targetInfo = (farmState.mobTarget ~= "" and _mobLabelMap[farmState.mobTarget]) or nil
+    for _, mob in ipairs(living:GetChildren()) do
+        if not mob:IsA("Model") then continue end
+        if PS:GetPlayerFromCharacter(mob) then continue end
+        if targetInfo and mob.Name ~= targetInfo.Name then continue end
+        local r = mob:FindFirstChild("HumanoidRootPart")
+        local h = mob:FindFirstChildOfClass("Humanoid")
+        if not (r and h and h.Health > 0) then continue end
+        local d = (r.Position - hrp.Position).Magnitude
+        if d < bestD then best = mob; bestD = d end
+    end
+    return best
+end
+
+local function makeFarmLoop(targetFn, activeKey)
+    local lastTgt, pickTime = nil, 0
+    return RS.Heartbeat:Connect(function()
+        if not farmState[activeKey] then return end
+        local c = getChar(); if not c then lastTgt = nil; return end
+        local hum = c:FindFirstChildOfClass("Humanoid")
+        if not hum or not hum.RootPart then lastTgt = nil; return end
+        if hum.Health <= 0 then lastTgt = nil; return end
+        local hrp = hum.RootPart
+        local now = tick()
+        if not lastTgt or not lastTgt.Parent
+            or not lastTgt:FindFirstChildOfClass("Humanoid")
+            or lastTgt:FindFirstChildOfClass("Humanoid").Health <= 0
+            or now - pickTime >= 0.5 then
+            lastTgt = targetFn(); pickTime = now
+        end
+        if lastTgt then
+            local rp = lastTgt:FindFirstChild("HumanoidRootPart")
+            if rp then
+                hrp.CFrame = CFrame.lookAt(_calcFarmPos(rp), rp.Position)
+                hrp.AssemblyLinearVelocity  = Vector3.zero
+                hrp.AssemblyAngularVelocity = Vector3.zero
+                pcall(function()
+                    if sethiddenproperty then sethiddenproperty(hrp, "PhysicsRepRootPart", rp) end
+                end)
+            end
+        else
+            pcall(function() if sethiddenproperty then sethiddenproperty(hrp, "PhysicsRepRootPart", nil) end end)
+        end
+    end)
+end
+
+local function scanMobList()
+    local list = {"Any (Closest)"}
+    _mobLabelMap = {}
+    local living = workspace:FindFirstChild("Living")
+    if living then
+        for _, mob in ipairs(living:GetChildren()) do
+            if not mob:IsA("Model") then continue end
+            if PS:GetPlayerFromCharacter(mob) then continue end
+            local label = mob.Name ~= "" and mob.Name or nil
+            if label and not _mobLabelMap[label] then
+                _mobLabelMap[label] = { Name = mob.Name }
+                table.insert(list, label)
+            end
+        end
+    end
+    table.sort(list, function(a, b)
+        if a == "Any (Closest)" then return true end
+        if b == "Any (Closest)" then return false end
+        return a < b
+    end)
+    return list
+end
+
+_FarmFeatures:AddDropdown("MobSelect", {
+    Text="Target Mob", Values=scanMobList(), Default=1, Multi=false,
     Callback=function(v)
-        _selectedBosses = {}
-        for boss, state in pairs(v) do if state then table.insert(_selectedBosses, boss) end end
-        _currentList = table.clone(_mobList[_selectedMob] or _mobList.Curses)
-        for _, b in ipairs(_selectedBosses) do table.insert(_currentList, b) end
+        local sel = type(v)=="table" and next(v) or v
+        farmState.mobTarget = (sel == "Any (Closest)") and "" or tostring(sel)
     end})
 
-_FarmFeatures:AddDropdown("FarmingMobSelect", {
-    Text="Select Mob", Values={"Curses","Prisoners","Pirates","Guardians","Hooligans","Thugs"}, Default=1, Multi=false,
-    Callback=function(v)
-        _selectedMob = type(v)=="table" and next(v) or v
-        _currentList = table.clone(_mobList[_selectedMob] or _mobList.Curses)
-        for _, b in ipairs(_selectedBosses) do table.insert(_currentList, b) end
-    end})
+_FarmFeatures:AddButton({Text="Refresh Mobs", Func=function()
+    Opt.MobSelect:SetValues(scanMobList())
+    notify("Mob list refreshed", 2)
+end})
 
-_FarmFeatures:AddSlider("FarmDistanceY", {Text="Select Distance Y", Default=5, Min=1, Max=25, Rounding=0, Compact=true,
-    Callback=function(v) _selectedOffsetY=v end})
+_FarmFeatures:AddToggle("StartFarmingMobs", {Text="Start Farming Mobs", Default=false,
+    Callback=function(p)
+        farmState.mobs = p
+        if farmConns.mobs then farmConns.mobs:Disconnect(); farmConns.mobs = nil end
+        if p then
+            getgenv()._AUT_autoM1    = true
+            getgenv()._AUT_autoEquip = true
+            farmConns.mobs = makeFarmLoop(nearestMob, "mobs")
+        else
+            getgenv()._AUT_autoM1    = false
+            getgenv()._AUT_autoEquip = false
+            pcall(function()
+                local hrp = getHRP()
+                if hrp and sethiddenproperty then sethiddenproperty(hrp, "PhysicsRepRootPart", nil) end
+            end)
+            pcall(function()
+                local hum = getHum()
+                if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
+            end)
+        end
+    end}):AddKeyPicker("FarmMobsKeybind", {Default="", SyncToggleState=true, Mode="Toggle", Text="Farm Mobs Keybind"})
 
-local _attackList = {"Q","E","R","T","G","Y","V","H","J","X","B","U","K","Z","C"}
-local _selectedMoveset = {}
+_FarmFeatures:AddDivider()
 
-_FarmFeatures:AddDropdown("FarmAttacksSelect", {
-    Text="Select Attacks", Values=_attackList, Default={}, Multi=true,
-    Callback=function(v)
-        _selectedMoveset = {}
-        for atk, _ in pairs(v) do table.insert(_selectedMoveset, atk) end
-    end})
+_FarmFeatures:AddDropdown("FarmMode", {
+    Text="Farm Mode", Values={"Behind","Above","Below","In Front"}, Default=1, Multi=false,
+    Callback=function(v) _farmMode = type(v)=="table" and next(v) or v end})
 
-_FarmFeatures:AddToggle("AutoHoldAttacks", {Text="Auto Use Hold+ Attacks Mode", Default=false, Callback=function() end})
+_FarmFeatures:AddSlider("FarmOffsetX", {Text="X Offset", Default=0,   Min=-50, Max=50, Rounding=1, Compact=true, Callback=function(v) _farmOffX=v end})
+_FarmFeatures:AddSlider("FarmOffsetY", {Text="Y Offset", Default=0,   Min=-50, Max=50, Rounding=1, Compact=true, Callback=function(v) _farmOffY=v end})
+_FarmFeatures:AddSlider("FarmOffsetZ", {Text="Z Offset", Default=6.5, Min=0,   Max=50, Rounding=1, Compact=true, Callback=function(v) _farmOffZ=v end})
 
-_FarmFeatures:AddLabel("— Miscellaneous —")
+_FarmFeatures:AddToggle("AutoEquipSpecs", {Text="Auto Equip Specs", Default=false,
+    Callback=function(p) getgenv()._AUT_autoEquip = p end})
 
+_FarmFeatures:AddToggle("AutoM1Farm", {Text="Auto M1 Attack", Default=false,
+    Callback=function(p) getgenv()._AUT_autoM1 = p end})
+
+_FarmFeatures:AddDivider()
+_FarmFeatures:AddLabel("— Misc —")
+
+local _foundItem = false
 _FarmFeatures:AddToggle("AutoInstaKill", {Text="Auto Insta Kill Mobs", Default=false,
     Callback=function(p)
         if not p then return end
@@ -1931,12 +2048,14 @@ _FarmFeatures:AddToggle("AutoInstaKill", {Text="Auto Insta Kill Mobs", Default=f
                 if not (Tog.AutoInstaKill and Tog.AutoInstaKill.Value) then conn:Disconnect(); return end
                 pcall(function()
                     for _, k in ipairs(workspace.Living:GetChildren()) do
-                        if k:IsA("Model") and k:FindFirstChild("Head") and k.Head ~= LP.Character.Head then
-                            if (k.Head.Position - LP.Character.Head.Position).Magnitude <= 35 then
-                                local hum = k:FindFirstChildOfClass("Humanoid")
-                                if hum and hum.Health > 0 then
-                                    local thresh = (hum.MaxHealth * (Opt.InstaKillThreshold and Opt.InstaKillThreshold.Value or 45)) / 100
-                                    if hum.Health <= thresh then hum.Health = 0; hum.MaxHealth = 0 end
+                        if k:IsA("Model") and PS:GetPlayerFromCharacter(k) == nil then
+                            if k:FindFirstChild("Head") and k.Head ~= LP.Character.Head then
+                                if (k.Head.Position - LP.Character.Head.Position).Magnitude <= 35 then
+                                    local hum = k:FindFirstChildOfClass("Humanoid")
+                                    if hum and hum.Health > 0 then
+                                        local thresh = (hum.MaxHealth * (Opt.InstaKillThreshold and Opt.InstaKillThreshold.Value or 45)) / 100
+                                        if hum.Health <= thresh then hum.Health = 0; hum.MaxHealth = 0 end
+                                    end
                                 end
                             end
                         end
@@ -1945,12 +2064,11 @@ _FarmFeatures:AddToggle("AutoInstaKill", {Text="Auto Insta Kill Mobs", Default=f
             end)
         end)
     end})
-
 _FarmFeatures:AddSlider("InstaKillThreshold", {Text="Insta Kill Threshold %", Default=45, Min=10, Max=100, Rounding=0, Compact=true, Callback=function() end})
 
-local _ascensionLimitToggle
 _FarmFeatures:AddInput("AscensionLimiter", {Default="99999", Numeric=true, Finished=false, Text="Ascension Limiter", Placeholder="99999"})
 
+local _ascensionLimitToggle
 _ascensionLimitToggle = _FarmFeatures:AddToggle("AutoAscend", {Text="Auto Ascend Ability", Default=false,
     Callback=function(p)
         if not p then return end
@@ -1966,7 +2084,7 @@ _ascensionLimitToggle = _FarmFeatures:AddToggle("AutoAscend", {Text="Auto Ascend
                             :InvokeServer(data.Value)
                     elseif lim <= rank then
                         _ascensionLimitToggle:SetValue(false)
-                        notify("Ascension Limiter reached — stopped.", 4)
+                        notify("Ascension Limiter reached.", 4)
                     end
                 end)
                 task.wait(0.75)
@@ -1974,83 +2092,8 @@ _ascensionLimitToggle = _FarmFeatures:AddToggle("AutoAscend", {Text="Auto Ascend
         end)
     end})
 
-_FarmFeatures:AddLabel("— Cooldowns —")
-
-local function _getMoveset()
-    local moves = {}
-    pcall(function()
-        for _, v in ipairs(LP.PlayerGui.UI.Gameplay.Moves:GetChildren()) do
-            if v:IsA("TextButton") and v.Name ~= "Rush Attack" and v.Name ~= "NextMove"
-                and v.Name ~= "Quickstep" and v.Name ~= "Block" and v.Name ~= "Pose" then
-                table.insert(moves, v.Name)
-            end
-        end
-    end)
-    return moves
-end
-
-local _selectedMoveset2 = {}
-local _cdDropdown = _FarmFeatures:AddDropdown("CooldownMovesSelect", {
-    Text="Select Moves", Values=_getMoveset(), Default={}, Multi=true,
-    Callback=function(v)
-        _selectedMoveset2 = {}
-        for m, _ in pairs(v) do table.insert(_selectedMoveset2, m) end
-    end})
-
-_FarmFeatures:AddButton({Text="Refresh Movesets", Func=function()
-    local moves = _getMoveset()
-    _cdDropdown:SetValues(moves)
-    notify("Moveset refreshed", 3)
-end})
-
-_FarmFeatures:AddToggle("MultiSupportModeCD", {Text="Multi Support Mode CD", Default=false, Callback=function() end})
-
-_FarmFeatures:AddToggle("AutoResetCooldowns", {Text="Auto Reset Attack Cooldowns", Default=false,
-    Callback=function(p)
-        if not p then return end
-        task.spawn(function()
-            while Tog.AutoResetCooldowns and Tog.AutoResetCooldowns.Value do
-                pcall(function()
-                    if #_selectedMoveset2 == 0 then return end
-                    local cdDetected = false
-                    local multiMode = Tog.MultiSupportModeCD and Tog.MultiSupportModeCD.Value
-                    if multiMode then
-                        local allCD = true
-                        for _, v in ipairs(_selectedMoveset2) do
-                            if not LP:FindFirstChild("Cooldowns"):FindFirstChild(v) then allCD=false; break end
-                        end
-                        if allCD then cdDetected = true end
-                    else
-                        for _, v in ipairs(_selectedMoveset2) do
-                            if LP:FindFirstChild("Cooldowns"):FindFirstChild(v) then cdDetected=true; break end
-                        end
-                    end
-                    if cdDetected and LP.Character.Humanoid.Health ~= 0 then
-                        LP.Character.Humanoid:ChangeState(15)
-                    end
-                end)
-                task.wait(0.0075)
-            end
-        end)
-    end})
-
+_FarmFeatures:AddDivider()
 _FarmFeatures:AddLabel("— Auto Equip / Rewards / Stats —")
-
-_FarmFeatures:AddToggle("AutoEquipSpecs", {Text="Auto Equip Specs", Default=false,
-    Callback=function(p)
-        if not p then return end
-        task.spawn(function()
-            while Tog.AutoEquipSpecs and Tog.AutoEquipSpecs.Value do
-                pcall(function()
-                    if not workspace.Living[LP.Name].StatesFolder.StandOn.Value then
-                        game:GetService("ReplicatedStorage"):WaitForChild("ReplicatedModules"):WaitForChild("KnitPackage"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("MoveInputService"):WaitForChild("RF"):WaitForChild("FireInput")
-                            :InvokeServer("Q")
-                    end
-                end)
-                task.wait(0.45)
-            end
-        end)
-    end})
 
 _FarmFeatures:AddToggle("AutoCollectRewards", {Text="Auto Collect Rewards", Default=false,
     Callback=function(p)
@@ -2108,9 +2151,9 @@ _FarmFeatures:AddToggle("AutoApplyStats", {Text="Auto Apply Stats", Default=fals
         end)
     end})
 
+_FarmFeatures:AddDivider()
 _FarmFeatures:AddLabel("— Auto Collect Chests —")
 
-local _foundItem = false
 _FarmFeatures:AddToggle("AutoCollectChests", {Text="Auto Collect Chests", Default=false,
     Callback=function(p)
         if not p then return end
@@ -2146,86 +2189,8 @@ _FarmFeatures:AddToggle("AutoCollectChests", {Text="Auto Collect Chests", Defaul
         end)
     end})
 
-_FarmFeatures:AddLabel("— Main Farming —")
-
-local _farmMobsThread = nil
-_FarmFeatures:AddToggle("StartFarmingMobs", {Text="Start Farming Mobs", Default=false,
-    Callback=function(p)
-        if _farmMobsThread then task.cancel(_farmMobsThread); _farmMobsThread = nil end
-        if not p then
-            pcall(function()
-                local hum = getHum()
-                if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
-            end)
-            return
-        end
-        _foundItem = false
-        _farmMobsThread = task.spawn(function()
-            local RS2 = game:GetService("ReplicatedStorage")
-            local inputRF = RS2:WaitForChild("ReplicatedModules"):WaitForChild("KnitPackage")
-                :WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("MoveInputService")
-                :WaitForChild("RF"):WaitForChild("FireInput")
-            while Tog.StartFarmingMobs and Tog.StartFarmingMobs.Value do
-                pcall(function()
-                    local char = getChar(); if not char then return end
-                    local hum  = char:FindFirstChildOfClass("Humanoid"); if not hum or hum.Health <= 0 then return end
-                    local hrpSelf = char:FindFirstChild("HumanoidRootPart"); if not hrpSelf then return end
-                    local headSelf = char:FindFirstChild("Head"); if not headSelf then return end
-
-                    hum:ChangeState(Enum.HumanoidStateType.Physics)
-                    hrpSelf.AssemblyLinearVelocity = Vector3.zero
-
-                    local closest, closestDist = nil, math.huge
-                    for _, k in ipairs(workspace.Living:GetChildren()) do
-                        if k:IsA("Model") and PS:GetPlayerFromCharacter(k) == nil then
-                            local kHead = k:FindFirstChild("Head")
-                            local kHRP  = k:FindFirstChild("HumanoidRootPart")
-                            local kHum  = k:FindFirstChildOfClass("Humanoid")
-                            if kHead and kHRP and kHum and kHum.Health > 0 then
-                                local nameMatch = false
-                                for _, n in ipairs(_currentList) do
-                                    if string.find(k.Name, n) then nameMatch = true; break end
-                                end
-                                if nameMatch then
-                                    local d = (kHRP.Position - hrpSelf.Position).Magnitude
-                                    if d < closestDist then closestDist = d; closest = k end
-                                end
-                            end
-                        end
-                    end
-
-                    if not closest then return end
-                    local targetHRP = closest:FindFirstChild("HumanoidRootPart"); if not targetHRP then return end
-
-                    hrpSelf.CFrame = CFrame.new(
-                        targetHRP.Position - Vector3.new(0, _selectedOffsetY, 0),
-                        targetHRP.Position
-                    )
-                    hrpSelf.AssemblyLinearVelocity = Vector3.zero
-
-                    if #_selectedMoveset > 0 then
-                        for _, atk in ipairs(_selectedMoveset) do
-                            if not (Tog.StartFarmingMobs and Tog.StartFarmingMobs.Value) then break end
-                            pcall(function()
-                                if Tog.AutoHoldAttacks and Tog.AutoHoldAttacks.Value then
-                                    inputRF:InvokeServer(atk.."+")
-                                else
-                                    inputRF:InvokeServer(atk)
-                                end
-                            end)
-                            task.wait(0.1)
-                        end
-                    end
-                    pcall(function() inputRF:InvokeServer("MouseButton1") end)
-                end)
-                task.wait(0.15)
-            end
-            pcall(function()
-                local hum = getHum()
-                if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
-            end)
-        end)
-    end})
+_FarmFeatures:AddDivider()
+_FarmFeatures:AddLabel("— Item Farming —")
 
 _FarmFeatures:AddToggle("StartFarmingItems", {Text="Start Farming Items", Default=false,
     Callback=function(p)
@@ -2262,72 +2227,6 @@ _FarmFeatures:AddToggle("StartFarmingItems", {Text="Start Farming Items", Defaul
                 end)
                 task.wait(0.075)
             end
-        end)
-    end})
-
-_FarmFeatures:AddLabel("— Alternate Farming —")
-
-local _farmNearestThread = nil
-_FarmFeatures:AddToggle("AutofarmNearest", {Text="Autofarm Nearest Boss / Mob", Default=false,
-    Callback=function(p)
-        if _farmNearestThread then task.cancel(_farmNearestThread); _farmNearestThread = nil end
-        if not p then
-            pcall(function()
-                local hum = getHum()
-                if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
-            end)
-            return
-        end
-        _farmNearestThread = task.spawn(function()
-            local RS2 = game:GetService("ReplicatedStorage")
-            local inputRF = RS2:WaitForChild("ReplicatedModules"):WaitForChild("KnitPackage")
-                :WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("MoveInputService")
-                :WaitForChild("RF"):WaitForChild("FireInput")
-            while Tog.AutofarmNearest and Tog.AutofarmNearest.Value do
-                pcall(function()
-                    local char = getChar(); if not char then return end
-                    local hum  = char:FindFirstChildOfClass("Humanoid"); if not hum or hum.Health <= 0 then return end
-                    local hrpSelf = char:FindFirstChild("HumanoidRootPart"); if not hrpSelf then return end
-
-                    hum:ChangeState(Enum.HumanoidStateType.Physics)
-                    hrpSelf.AssemblyLinearVelocity = Vector3.zero
-
-                    local closest, closestDist = nil, math.huge
-                    for _, k in ipairs(workspace.Living:GetChildren()) do
-                        if k:IsA("Model") and PS:GetPlayerFromCharacter(k) == nil then
-                            local kHRP = k:FindFirstChild("HumanoidRootPart")
-                            local kHum = k:FindFirstChildOfClass("Humanoid")
-                            if kHRP and kHum and kHum.Health > 0 then
-                                local d = (kHRP.Position - hrpSelf.Position).Magnitude
-                                if d <= 1500 and d < closestDist then closest = k; closestDist = d end
-                            end
-                        end
-                    end
-
-                    if not closest then return end
-                    local targetHRP = closest:FindFirstChild("HumanoidRootPart"); if not targetHRP then return end
-
-                    hrpSelf.CFrame = CFrame.new(
-                        targetHRP.Position - Vector3.new(0, _selectedOffsetY, 0),
-                        targetHRP.Position
-                    )
-                    hrpSelf.AssemblyLinearVelocity = Vector3.zero
-
-                    if #_selectedMoveset > 0 then
-                        for _, atk in ipairs(_selectedMoveset) do
-                            if not (Tog.AutofarmNearest and Tog.AutofarmNearest.Value) then break end
-                            pcall(function() inputRF:InvokeServer(atk) end)
-                            task.wait(0.1)
-                        end
-                    end
-                    pcall(function() inputRF:InvokeServer("MouseButton1") end)
-                end)
-                task.wait(0.15)
-            end
-            pcall(function()
-                local hum = getHum()
-                if hum then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end
-            end)
         end)
     end})
 
@@ -2402,4 +2301,4 @@ if Tog.AutoHideUI and Tog.AutoHideUI.Value then
     pcall(function() Window:Toggle(false) end)
 end
 
-notify("⊙ A Universal Time", 5)
+notify("⊙ Zero Hub", 5)
