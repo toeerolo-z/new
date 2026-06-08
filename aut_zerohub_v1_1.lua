@@ -989,118 +989,195 @@ _ESPSettings:AddToggle("ESPAntiLag",{Text="Anti-Lag",Default=true,
     Callback=function(p) S.espAntiLag=p end})
 _ESPSettings:AddLabel("Disables ESP when FPS < 30")
 
-local _mobESPActive  = {}; local _mobESPEnabled = false
-local mobESPColor2   = Color3.fromRGB(255,100,100)
-local _mobESP2       = {components={}, showName=false, showHP=false, showDist=false, rainbow=false}
+local _mobESPActive  = {}
+local _mobESPEnabled = false
+local mobESPColor2   = Color3.fromRGB(255, 100, 100)
+local _mobESP2       = {components={}, showName=true, showHP=false, showDist=false, rainbow=false}
 
-local function removeMobESP(mob)
-    local d = _mobESPActive[mob]; if not d then return end
-    pcall(function() if d.txt    then d.txt:Remove()    end end)
-    pcall(function() if d.box    then d.box:Remove()    end end)
-    pcall(function() if d.hpFill then d.hpFill:Remove() end end)
-    pcall(function() if d.hpBack then d.hpBack:Remove() end end)
-    pcall(function() if d.tracer then d.tracer:Remove() end end)
-    pcall(function() if d.dot    then d.dot:Remove()    end end)
-    pcall(function() if d.hl     then d.hl:Destroy()    end end)
-    if d.conn    then pcall(function() d.conn:Disconnect()    end) end
-    if d.ancConn then pcall(function() d.ancConn:Disconnect() end) end
-    _mobESPActive[mob] = nil
-end
+local _npcESPActive  = {}
+local _npcESPEnabled = false
+local npcESPColor2   = Color3.fromRGB(100, 220, 255)
+local _npcESP2       = {components={}, showName=true, showDist=false, rainbow=false}
 
-local function addMobESP(mob)
-    if not mob or _mobESPActive[mob] then return end
-    local hum  = mob:FindFirstChildOfClass("Humanoid"); if not hum then return end
-    local hrp  = mob:FindFirstChild("HumanoidRootPart"); if not hrp then return end
-    local head = mob:FindFirstChild("Head")
+RS.Heartbeat:Connect(function(dt)
+    _hue = (_hue + dt * 0.25) % 1
+    local rc = Color3.fromHSV(_hue, 1, 1)
+    if S.espRainbow     then espColor     = rc end
+    if _mobESP2.rainbow then mobESPColor2 = rc end
+    if _npcESP2.rainbow then npcESPColor2 = rc end
+end)
+
+local function makeESPEntry(obj, label, hum, hrp, head)
     local txt    = Drawing.new("Text");   txt.Center=true; txt.Outline=true; txt.Visible=false; txt.Size=14
     local box    = Drawing.new("Square"); box.Filled=false; box.Thickness=1.5; box.Visible=false
     local hpFill = Drawing.new("Square"); hpFill.Filled=true; hpFill.Visible=false
     local hpBack = Drawing.new("Square"); hpBack.Filled=false; hpBack.Thickness=1; hpBack.Color=Color3.new(0,0,0); hpBack.Visible=false
     local tracer = Drawing.new("Line");   tracer.Thickness=1; tracer.Visible=false
     local dot    = Drawing.new("Circle"); dot.Radius=4; dot.Filled=true; dot.Visible=false; dot.Thickness=1
-    local hl     = Instance.new("Highlight",mob); hl.FillTransparency=0.5; hl.OutlineTransparency=0; hl.Enabled=false
-    local conn = RS.Heartbeat:Connect(function()
-        if not (_mobESPEnabled and mob and mob.Parent) then removeMobESP(mob); return end
-        local myHRP = getHRP(); if not myHRP then return end
-        local col   = mobESPColor2
-        local dist  = (hrp.Position - myHRP.Position).Magnitude
-        local comps = _mobESP2.components or {}
-        if dist > (S.espDist or 1000) then txt.Visible=false; box.Visible=false; hpFill.Visible=false; hpBack.Visible=false; tracer.Visible=false; dot.Visible=false; hl.Enabled=false; return end
-        local sv,onS = Cam:WorldToViewportPoint(hrp.Position)
-        local hv,onH = head and Cam:WorldToViewportPoint(head.Position)
-        if not onS then txt.Visible=false; box.Visible=false; hpFill.Visible=false; hpBack.Visible=false; tracer.Visible=false; dot.Visible=false; hl.Enabled=false; return end
-        local scale=math.clamp(1/(sv.Z*0.04),0.5,3); local bw=35*scale; local bh=70*scale; local bx=sv.X-bw/2; local by=sv.Y-bh/2
-        local hpPct=math.clamp(hum.Health/math.max(hum.MaxHealth,1),0,1); local hpCol=Color3.fromHSV(hpPct*0.33,1,1)
-        if comps["Box 2D"] then box.Position=Vector2.new(bx,by); box.Size=Vector2.new(bw,bh); box.Color=col; box.Visible=true else box.Visible=false end
-        if comps["HP Bar"] then local barW=6; local barX=bx-barW-3; hpBack.Position=Vector2.new(barX-1,by-1); hpBack.Size=Vector2.new(barW+2,bh+2); hpBack.Visible=true; hpFill.Position=Vector2.new(barX,by+bh*(1-hpPct)); hpFill.Size=Vector2.new(barW,bh*hpPct); hpFill.Color=hpCol; hpFill.Visible=true else hpFill.Visible=false; hpBack.Visible=false end
-        if comps["Text"] then local parts={}; if _mobESP2.showName then table.insert(parts,mob.Name) end; if _mobESP2.showHP then table.insert(parts,string.format("[%d/%d]",hum.Health,hum.MaxHealth)) end; if _mobESP2.showDist then table.insert(parts,string.format("[%.0fm]",dist)) end; txt.Text=table.concat(parts," "); txt.Color=col; txt.Size=S.espFontSize or 14; txt.Position=Vector2.new(sv.X,by-(S.espFontSize or 14)-2); txt.Visible=#parts>0 else txt.Visible=false end
-        if comps["Tracer"] then tracer.From=Vector2.new(sv.X,sv.Y); tracer.To=Vector2.new(Cam.ViewportSize.X/2,Cam.ViewportSize.Y); tracer.Color=col; tracer.Thickness=S.tracerThick or 1; tracer.Visible=true else tracer.Visible=false end
-        if comps["Head Dot"] and onH and head then dot.Position=Vector2.new(hv.X,hv.Y); dot.Color=col; dot.Visible=true else dot.Visible=false end
-        hl.Enabled=comps["Highlight"] and _mobESPEnabled or false; hl.FillColor=col; hl.OutlineColor=col; hl.FillTransparency=S.hlFillTrans or 0.5; hl.OutlineTransparency=S.hlOutlineTrans or 0
-    end)
-    _mobESPActive[mob]={txt=txt,box=box,hpFill=hpFill,hpBack=hpBack,tracer=tracer,dot=dot,hl=hl,conn=conn,
-        ancConn=mob.AncestryChanged:Connect(function(_,p) if not p then removeMobESP(mob) end end)}
+    local hl     = Instance.new("Highlight", obj)
+    hl.FillTransparency=0.5; hl.OutlineTransparency=0; hl.Enabled=false
+    return {txt=txt, box=box, hpFill=hpFill, hpBack=hpBack, tracer=tracer, dot=dot, hl=hl,
+            hrp=hrp, hum=hum, head=head, label=label or obj.Name}
 end
 
-local function scanMobESP()
-    local living = workspace:FindFirstChild("Living"); if not living then return end
-    for _, m in ipairs(living:GetChildren()) do
-        if m:IsA("Model") and not PS:GetPlayerFromCharacter(m) then addMobESP(m) end
-    end
-end
-local function stopMobESP() _mobESPEnabled=false; for mob in pairs(_mobESPActive) do removeMobESP(mob) end end
-
-local _npcESPActive  = {}; local _npcESPEnabled = false
-local npcESPColor2   = Color3.fromRGB(100,220,255)
-local _npcESP2       = {components={}, showName=false, showDist=false, rainbow=false}
-
-RS.Heartbeat:Connect(function(dt)
-    _hue = (_hue + dt * 0.25) % 1
-    local rc = Color3.fromHSV(_hue, 1, 1)
-    if S.espRainbow      then espColor     = rc end
-    if _mobESP2.rainbow  then mobESPColor2 = rc end
-    if _npcESP2.rainbow  then npcESPColor2 = rc end
-end)
-
-local function removeNPCESP(npc)
-    local d = _npcESPActive[npc]; if not d then return end
-    pcall(function() if d.txt    then d.txt:Remove()    end end)
-    pcall(function() if d.hl     then d.hl:Destroy()    end end)
-    if d.conn    then pcall(function() d.conn:Disconnect()    end) end
+local function destroyESPEntry(d)
+    pcall(function() d.txt:Remove()    end)
+    pcall(function() d.box:Remove()    end)
+    pcall(function() d.hpFill:Remove() end)
+    pcall(function() d.hpBack:Remove() end)
+    pcall(function() d.tracer:Remove() end)
+    pcall(function() d.dot:Remove()    end)
+    pcall(function() d.hl:Destroy()    end)
     if d.ancConn then pcall(function() d.ancConn:Disconnect() end) end
-    _npcESPActive[npc] = nil
+end
+
+local function renderEntry(d, col, comps, cfg, dist)
+    local sv, onS = Cam:WorldToViewportPoint(d.hrp.Position)
+    if not onS then
+        d.txt.Visible=false; d.box.Visible=false; d.hpFill.Visible=false
+        d.hpBack.Visible=false; d.tracer.Visible=false; d.dot.Visible=false
+        d.hl.Enabled=false; return
+    end
+    local scale  = math.clamp(1/(sv.Z*0.04), 0.5, 3)
+    local bw, bh = 35*scale, 70*scale
+    local bx, by = sv.X-bw/2, sv.Y-bh/2
+    local fs     = S.espFontSize or 14
+    local hum    = d.hum
+    local hpPct  = (hum and hum.MaxHealth > 0) and math.clamp(hum.Health/hum.MaxHealth, 0, 1) or 1
+
+    if comps["Box 2D"] then
+        d.box.Position=Vector2.new(bx,by); d.box.Size=Vector2.new(bw,bh); d.box.Color=col; d.box.Visible=true
+    else d.box.Visible=false end
+
+    if comps["HP Bar"] and hum then
+        local barX = bx-10
+        d.hpBack.Position=Vector2.new(barX-1,by-1); d.hpBack.Size=Vector2.new(8,bh+2); d.hpBack.Visible=true
+        d.hpFill.Position=Vector2.new(barX,by+bh*(1-hpPct)); d.hpFill.Size=Vector2.new(6,bh*hpPct)
+        d.hpFill.Color=Color3.fromHSV(hpPct*0.33,1,1); d.hpFill.Visible=true
+    else d.hpFill.Visible=false; d.hpBack.Visible=false end
+
+    if comps["Text"] then
+        local parts = {}
+        if cfg.showName  then table.insert(parts, d.label) end
+        if cfg.showHP and hum then table.insert(parts, string.format("[%d/%d]", math.floor(hum.Health), math.floor(hum.MaxHealth))) end
+        if cfg.showDist  then table.insert(parts, string.format("[%.0fm]", dist)) end
+        d.txt.Text=table.concat(parts," "); d.txt.Color=col; d.txt.Size=fs
+        d.txt.Position=Vector2.new(sv.X, by-fs-2); d.txt.Visible=#parts>0
+    else d.txt.Visible=false end
+
+    if comps["Tracer"] then
+        d.tracer.From=Vector2.new(sv.X,sv.Y)
+        d.tracer.To=Vector2.new(Cam.ViewportSize.X/2, Cam.ViewportSize.Y)
+        d.tracer.Color=col; d.tracer.Thickness=S.tracerThick or 1; d.tracer.Visible=true
+    else d.tracer.Visible=false end
+
+    if comps["Head Dot"] and d.head then
+        local hv, onH = Cam:WorldToViewportPoint(d.head.Position)
+        if onH then d.dot.Position=Vector2.new(hv.X,hv.Y); d.dot.Color=col; d.dot.Visible=true
+        else d.dot.Visible=false end
+    else d.dot.Visible=false end
+
+    d.hl.Enabled = comps["Highlight"] or false
+    d.hl.FillColor=col; d.hl.OutlineColor=col
+    d.hl.FillTransparency=S.hlFillTrans or 0.5
+    d.hl.OutlineTransparency=S.hlOutlineTrans or 0
+end
+
+local function addMobESP(mob)
+    if not mob or _mobESPActive[mob] then return end
+    local hum = mob:FindFirstChildOfClass("Humanoid"); if not hum then return end
+    local hrp = mob:FindFirstChild("HumanoidRootPart"); if not hrp then return end
+    local d = makeESPEntry(mob, mob.Name, hum, hrp, mob:FindFirstChild("Head"))
+    d.ancConn = mob.AncestryChanged:Connect(function(_, p)
+        if not p then destroyESPEntry(_mobESPActive[mob] or {}); _mobESPActive[mob]=nil end
+    end)
+    _mobESPActive[mob] = d
+end
+
+local function removeMobESP(mob)
+    local d = _mobESPActive[mob]; if not d then return end
+    destroyESPEntry(d); _mobESPActive[mob] = nil
 end
 
 local function addNPCESP(npc, label)
     if not npc or _npcESPActive[npc] then return end
     local hrp = npc:FindFirstChild("HumanoidRootPart") or npc.PrimaryPart; if not hrp then return end
-    local txt = Drawing.new("Text"); txt.Center=true; txt.Outline=true; txt.Visible=false; txt.Size=14
-    local hl  = Instance.new("Highlight",npc); hl.FillTransparency=0.5; hl.OutlineTransparency=0; hl.Enabled=false
-    local conn = RS.Heartbeat:Connect(function()
-        if not (_npcESPEnabled and npc and npc.Parent) then removeNPCESP(npc); return end
-        local myHRP = getHRP(); if not myHRP then return end
-        local col  = npcESPColor2
-        local dist = (hrp.Position - myHRP.Position).Magnitude
-        local comps = _npcESP2.components or {}
-        if dist > (S.espDist or 1000) then txt.Visible=false; hl.Enabled=false; return end
-        local sv,onS = Cam:WorldToViewportPoint(hrp.Position)
-        if not onS then txt.Visible=false; hl.Enabled=false; return end
-        if comps["Text"] then local parts={}; if _npcESP2.showName then table.insert(parts,label or npc.Name) end; if _npcESP2.showDist then table.insert(parts,string.format("[%.0fm]",dist)) end; txt.Text=table.concat(parts," "); txt.Color=col; txt.Size=S.espFontSize or 14; txt.Position=Vector2.new(sv.X,sv.Y-20); txt.Visible=#parts>0 else txt.Visible=false end
-        hl.Enabled=comps["Highlight"] and _npcESPEnabled or false; hl.FillColor=col; hl.OutlineColor=col; hl.FillTransparency=S.hlFillTrans or 0.5; hl.OutlineTransparency=S.hlOutlineTrans or 0
+    local d = makeESPEntry(npc, label or npc.Name, npc:FindFirstChildOfClass("Humanoid"), hrp, npc:FindFirstChild("Head"))
+    d.ancConn = npc.AncestryChanged:Connect(function(_, p)
+        if not p then destroyESPEntry(_npcESPActive[npc] or {}); _npcESPActive[npc]=nil end
     end)
-    _npcESPActive[npc]={txt=txt,hl=hl,conn=conn,
-        ancConn=npc.AncestryChanged:Connect(function(_,p) if not p then removeNPCESP(npc) end end)}
+    _npcESPActive[npc] = d
+end
+
+local function removeNPCESP(npc)
+    local d = _npcESPActive[npc]; if not d then return end
+    destroyESPEntry(d); _npcESPActive[npc] = nil
+end
+
+RS.RenderStepped:Connect(function()
+    local myHRP = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart"); if not myHRP then return end
+    local maxD  = S.espDist or 1000
+
+    if _mobESPEnabled then
+        for mob, d in pairs(_mobESPActive) do
+            if not mob or not mob.Parent then removeMobESP(mob); continue end
+            local hum = d.hum
+            if hum and hum.Health <= 0 then removeMobESP(mob); continue end
+            local dist = (d.hrp.Position - myHRP.Position).Magnitude
+            if dist > maxD then
+                d.txt.Visible=false; d.box.Visible=false; d.hpFill.Visible=false
+                d.hpBack.Visible=false; d.tracer.Visible=false; d.dot.Visible=false
+                d.hl.Enabled=false; continue
+            end
+            renderEntry(d, mobESPColor2, _mobESP2.components or {}, _mobESP2, dist)
+        end
+    end
+
+    if _npcESPEnabled then
+        for npc, d in pairs(_npcESPActive) do
+            if not npc or not npc.Parent then removeNPCESP(npc); continue end
+            local dist = (d.hrp.Position - myHRP.Position).Magnitude
+            if dist > maxD then
+                d.txt.Visible=false; d.box.Visible=false; d.hpFill.Visible=false
+                d.hpBack.Visible=false; d.tracer.Visible=false; d.dot.Visible=false
+                d.hl.Enabled=false; continue
+            end
+            renderEntry(d, npcESPColor2, _npcESP2.components or {}, _npcESP2, dist)
+        end
+    end
+end)
+
+local function scanMobESP()
+    local live = workspace.Living; if not live then return end
+    for _, m in ipairs(live:GetChildren()) do
+        if m:IsA("Model") and not PS:GetPlayerFromCharacter(m) then addMobESP(m) end
+    end
+end
+
+local function stopMobESP()
+    _mobESPEnabled = false
+    for mob in pairs(_mobESPActive) do removeMobESP(mob) end
 end
 
 local function scanNPCESP()
-    local npcs = workspace:FindFirstChild("NPCs"); if not npcs then return end
-    for _, obj in ipairs(npcs:GetChildren()) do
-        if obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart") then
-            addNPCESP(obj, obj.Name)
+    local npcs = workspace:FindFirstChild("NPCS") or workspace:FindFirstChild("NPCs"); if not npcs then return end
+    local function scan(parent)
+        for _, obj in ipairs(parent:GetChildren()) do
+            if obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart") and not PS:GetPlayerFromCharacter(obj) then
+                addNPCESP(obj, obj.Name)
+            elseif obj:IsA("Folder") or obj:IsA("Model") then
+                scan(obj)
+            end
         end
     end
+    scan(npcs)
 end
-local function stopNPCESP() _npcESPEnabled=false; for npc in pairs(_npcESPActive) do removeNPCESP(npc) end end
+
+local function stopNPCESP()
+    _npcESPEnabled = false
+    for npc in pairs(_npcESPActive) do removeNPCESP(npc) end
+end
+
 
 local _MobESP  = Tabs.Visuals:AddLeftGroupbox("Mob ESP",  "swords")
 local _NPCYESP = Tabs.Visuals:AddRightGroupbox("NPC ESP", "user-round")
@@ -1888,7 +1965,7 @@ if not getgenv()._AUT_combatLoopsStarted then
             task.wait(0.5)
             if getgenv()._AUT_autoEquip then
                 pcall(function()
-                    local living = workspace:FindFirstChild("Living")
+                    local living = workspace.Living
                     local myModel = living and living:FindFirstChild(LP.Name)
                     local states = myModel and myModel:FindFirstChild("StatesFolder")
                     local standOn = states and states:FindFirstChild("StandOn")
@@ -1915,7 +1992,7 @@ end
 local function nearestMob()
     local hrp = getHRP(); if not hrp then return end
     local best, bestD = nil, math.huge
-    local living = workspace:FindFirstChild("Living"); if not living then return end
+    local living = workspace.Living; if not living then return end
     local targetInfo = (farmState.mobTarget ~= "" and _mobLabelMap[farmState.mobTarget]) or nil
     for _, mob in ipairs(living:GetChildren()) do
         if not mob:IsA("Model") then continue end
@@ -1931,20 +2008,20 @@ local function nearestMob()
 end
 
 local function makeFarmLoop(targetFn, activeKey)
-    local lastTgt, pickTime = nil, 0
+    local lastTgt = nil
     return RS.Heartbeat:Connect(function()
         if not farmState[activeKey] then return end
+        if _foundItem then return end
         local c = getChar(); if not c then lastTgt = nil; return end
         local hum = c:FindFirstChildOfClass("Humanoid")
         if not hum or not hum.RootPart then lastTgt = nil; return end
         if hum.Health <= 0 then lastTgt = nil; return end
         local hrp = hum.RootPart
-        local now = tick()
-        if not lastTgt or not lastTgt.Parent
-            or not lastTgt:FindFirstChildOfClass("Humanoid")
-            or lastTgt:FindFirstChildOfClass("Humanoid").Health <= 0
-            or now - pickTime >= 0.5 then
-            lastTgt = targetFn(); pickTime = now
+        local tgtValid = lastTgt and lastTgt.Parent
+            and lastTgt:FindFirstChildOfClass("Humanoid")
+            and lastTgt:FindFirstChildOfClass("Humanoid").Health > 0
+        if not tgtValid then
+            lastTgt = targetFn()
         end
         if lastTgt then
             local rp = lastTgt:FindFirstChild("HumanoidRootPart")
@@ -1965,7 +2042,7 @@ end
 local function scanMobList()
     local list = {"Any (Closest)"}
     _mobLabelMap = {}
-    local living = workspace:FindFirstChild("Living")
+    local living = workspace.Living
     if living then
         for _, mob in ipairs(living:GetChildren()) do
             if not mob:IsA("Model") then continue end
@@ -2039,29 +2116,36 @@ _FarmFeatures:AddDivider()
 _FarmFeatures:AddLabel("— Misc —")
 
 local _foundItem = false
+local _instaKillConn = nil
 _FarmFeatures:AddToggle("AutoInstaKill", {Text="Auto Insta Kill Mobs", Default=false,
     Callback=function(p)
+        if _instaKillConn then _instaKillConn:Disconnect(); _instaKillConn = nil end
         if not p then return end
-        task.spawn(function()
-            local conn
-            conn = RS.RenderStepped:Connect(function()
-                if not (Tog.AutoInstaKill and Tog.AutoInstaKill.Value) then conn:Disconnect(); return end
-                pcall(function()
-                    for _, k in ipairs(workspace.Living:GetChildren()) do
-                        if k:IsA("Model") and PS:GetPlayerFromCharacter(k) == nil then
-                            if k:FindFirstChild("Head") and k.Head ~= LP.Character.Head then
-                                if (k.Head.Position - LP.Character.Head.Position).Magnitude <= 35 then
-                                    local hum = k:FindFirstChildOfClass("Humanoid")
-                                    if hum and hum.Health > 0 then
-                                        local thresh = (hum.MaxHealth * (Opt.InstaKillThreshold and Opt.InstaKillThreshold.Value or 45)) / 100
-                                        if hum.Health <= thresh then hum.Health = 0; hum.MaxHealth = 0 end
-                                    end
-                                end
+        pcall(function()
+            sethiddenproperty(LP, "MaxSimulationRadius", math.huge)
+            sethiddenproperty(LP, "SimulationRadius",    math.huge)
+        end)
+        _instaKillConn = RS.Heartbeat:Connect(function()
+            if not (Tog.AutoInstaKill and Tog.AutoInstaKill.Value) then
+                _instaKillConn:Disconnect(); _instaKillConn = nil; return
+            end
+            local hrp = getHRP(); if not hrp then return end
+            local live = workspace.Living; if not live then return end
+            local thresh = Opt.InstaKillThreshold and Opt.InstaKillThreshold.Value or 45
+            for _, k in ipairs(live:GetChildren()) do
+                if k:IsA("Model") and PS:GetPlayerFromCharacter(k) == nil then
+                    local kHRP = k:FindFirstChild("HumanoidRootPart")
+                    if kHRP and (kHRP.Position - hrp.Position).Magnitude <= 35 then
+                        local hum = k:FindFirstChildOfClass("Humanoid")
+                        if hum and hum.Health > 0 then
+                            local threshHP = (hum.MaxHealth * thresh) / 100
+                            if thresh == 0 or hum.Health <= threshHP then
+                                pcall(function() hum.Health = 0 end)
                             end
                         end
                     end
-                end)
-            end)
+                end
+            end
         end)
     end})
 _FarmFeatures:AddSlider("InstaKillThreshold", {Text="Insta Kill Threshold %", Default=45, Min=10, Max=100, Rounding=0, Compact=true, Callback=function() end})
