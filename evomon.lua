@@ -11,7 +11,8 @@ local Cam = workspace.CurrentCamera
 -- WINDOW
 ------------------------------------------------------------
 local Window = Library:CreateWindow({
-    Title = "Zero Hub",
+    Title = "ZERO HUB",
+    Version = "v1.0.0",
 })
 
 ------------------------------------------------------------
@@ -150,34 +151,37 @@ local function setupBattleListeners()
         _evo.inBattle = false
     end))
 
-    -- Catch phase — click actual UI buttons
+    -- Catch phase — click UI buttons directly
     table.insert(_evo.battleConns, BattleBindable.ClientBattleCatchPhaseStart.Event:Connect(function()
         task.wait(1)
-        local gui = LP:FindFirstChildOfClass("PlayerGui")
-        if not gui then return end
-
-        if _evo.autoCancel then
-            -- Click GiveUpButton or EscapeButton
-            for _, v in ipairs(gui:GetDescendants()) do
-                if (v.Name == "GiveUpButton" or v.Name == "EscapeButton") and (v:IsA("TextButton") or v:IsA("ImageButton")) then
-                    pcall(function() firesignal(v.Activated) end)
-                    pcall(function() firesignal(v.MouseButton1Click) end)
-                    break
+        pcall(function()
+            local gui = LP:FindFirstChildOfClass("PlayerGui")
+            if _evo.autoCancel then
+                for _, v in ipairs(gui:GetDescendants()) do
+                    if v.Name == "EscapeButton" and (v:IsA("TextButton") or v:IsA("ImageButton")) then
+                        local conns = getconnections(v.MouseButton1Click)
+                        for _, c in ipairs(conns) do
+                            if c.Function then pcall(c.Function) end
+                        end
+                        break
+                    end
+                end
+            elseif _evo.autoCatch then
+                for _, v in ipairs(gui:GetDescendants()) do
+                    if v.Name == "AutoCatchButton" and v:IsA("ImageButton") then
+                        local conns = getconnections(v.Activated)
+                        if conns[1] and conns[1].Function then
+                            conns[1].Function()
+                        end
+                        break
+                    end
                 end
             end
-        elseif _evo.autoCatch then
-            -- Click AutoCatchButton
-            for _, v in ipairs(gui:GetDescendants()) do
-                if v.Name == "AutoCatchButton" and (v:IsA("TextButton") or v:IsA("ImageButton")) then
-                    pcall(function() firesignal(v.Activated) end)
-                    pcall(function() firesignal(v.MouseButton1Click) end)
-                    break
-                end
-            end
-        end
+        end)
+        task.wait(2)
+        _evo.inBattle = false
     end))
 
-    -- Fallback settle
     table.insert(_evo.battleConns, BattleRemote.ResSettleBattle.OnClientEvent:Connect(function()
         if not _evo.autoCatch and not _evo.autoCancel then
             task.wait(2)
